@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a0a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DLP Navigator">
+<meta name="application-name" content="DLP Navigator">
+<meta name="description" content="Twój przewodnik po Disneyland Paris — kolejki, plan dnia, AI doradca">
+<title>DLP Navigator</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-144.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0820;
+  --bg2: #1a1035;
+  --bg3: #241848;
+  --card: #1e1440;
+  --card2: #281c52;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0ecff;
+  --text2: rgba(240,236,255,0.65);
+  --text3: rgba(240,236,255,0.35);
+  --purple: #8b6ef5;
+  --purple2: #a98ff7;
+  --gold: #f5c842;
+  --gold2: #fad96a;
+  --green: #4ecf8a;
+  --red: #f06060;
+  --amber: #f59c38;
+  --blue: #5bb8f5;
+  --tab-h: 72px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+/* ── APP SHELL ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  position: relative;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--bg2);
+  padding: calc(12px + var(--safe-top)) 16px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.header-logo {
+  display: flex; align-items: center; gap: 8px;
+}
+.header-logo svg { width: 28px; height: 28px; }
+.header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+.header-title span { color: var(--gold); }
+.header-date {
+  font-size: 12px; color: var(--text2);
+  background: var(--bg3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+/* ── SCREENS ── */
+.screens {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 12px 0;
+  display: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.screen.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── BOTTOM NAV ── */
+.tab-bar {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: var(--safe-bottom);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 4px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  transition: color 0.2s;
+  position: relative;
+}
+.tab.active { color: var(--purple2); }
+.tab svg { width: 22px; height: 22px; transition: transform 0.2s; }
+.tab.active svg { transform: scale(1.1); }
+.tab-indicator {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 32px; height: 2px;
+  background: var(--purple);
+  border-radius: 0 0 2px 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.tab.active .tab-indicator { opacity: 1; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 14px 0 8px;
+}
+.section-label:first-child { margin-top: 4px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.card:active { transform: scale(0.98); transition: transform 0.1s; }
+
+/* ── QUEUE SCREEN ── */
+
+.last-update { font-size: 11px; color: var(--text3); }
+
+.attr-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.attr-emoji {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.attr-info { flex: 1; min-width: 0; }
+.attr-name { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.attr-tags { display: flex; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.tag-both { background: rgba(78,207,138,0.15); color: var(--green); }
+.tag-kuba { background: rgba(91,184,245,0.15); color: var(--blue); }
+.tag-priority { background: rgba(245,200,66,0.15); color: var(--gold); }
+
+.wait-block { text-align: center; flex-shrink: 0; min-width: 52px; }
+.wait-num { font-size: 26px; font-weight: 800; line-height: 1; }
+.wait-unit { font-size: 10px; font-weight: 600; color: var(--text3); }
+.wait-status { font-size: 10px; font-weight: 700; margin-top: 2px; }
+
+.green { color: var(--green) !important; }
+.amber { color: var(--amber) !important; }
+.red { color: var(--red) !important; }
+
+.alert-box {
+  background: rgba(78,207,138,0.08);
+  border: 1px solid rgba(78,207,138,0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+  line-height: 1.5;
+  display: none;
+}
+.alert-box.show { display: block; }
+
+.loading-overlay {
+  display: none;
+  position: absolute; inset: 0;
+  background: rgba(15,8,32,0.75);
+  z-index: 50;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 14px;
+}
+.loading-overlay.show { display: flex; }
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border2);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── PLAN SCREEN ── */
+.timeline-item {
+  display: flex;
+  gap: 0;
+  position: relative;
+}
+.tl-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 52px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.tl-time {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.tl-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  margin: 5px 0 0;
+  flex-shrink: 0;
+  border: 2px solid var(--bg);
+}
+.tl-line {
+  width: 2px;
+  flex: 1;
+  min-height: 16px;
+  background: var(--border);
+  margin-top: 3px;
+}
+.tl-card {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 9px 12px;
+  margin-bottom: 8px;
+  margin-left: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.tl-card.current {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 1px var(--purple), 0 4px 20px rgba(139,110,245,0.15);
+}
+.tl-card.current::before {
+  content: 'TERAZ';
+  position: absolute;
+  top: 8px; right: 10px;
+  font-size: 9px; font-weight: 800;
+  color: var(--purple);
+  letter-spacing: 0.1em;
+}
+.tl-card.done { opacity: 0.45; }
+.tl-title { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.35; }
+.tl-sub { font-size: 11px; color: var(--text2); margin-top: 3px; line-height: 1.45; }
+.tl-badges { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+.badge {
+  font-size: 10px; font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.badge-kids { background: rgba(78,207,138,0.12); color: var(--green); }
+.badge-kuba { background: rgba(91,184,245,0.12); color: var(--blue); }
+.badge-meal { background: rgba(245,156,56,0.12); color: var(--amber); }
+.badge-show { background: rgba(139,110,245,0.12); color: var(--purple2); }
+.badge-rest { background: rgba(245,200,66,0.12); color: var(--gold); }
+
+/* ── CHAT SCREEN ── */
+.chat-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-bottom: 0;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.msg {
+  max-width: 88%;
+  padding: 10px 13px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+.msg.ai {
+  background: var(--card2);
+  color: var(--text);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--border);
+}
+.msg.user {
+  background: var(--purple);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.msg.thinking {
+  background: var(--card);
+  color: var(--text3);
+  border: 1px solid var(--border);
+  font-style: italic;
+  align-self: flex-start;
+}
+.msg.thinking::after {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 4px;
+  background: var(--text3);
+  border-radius: 50%;
+  margin-left: 4px;
+  animation: blink 1s infinite;
+}
+@keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+.quick-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 0 10px;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.quick-chips::-webkit-scrollbar { display: none; }
+.chip {
+  white-space: nowrap;
+  font-size: 11px; font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  color: var(--purple2);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.chip:active { background: var(--bg3); }
+
+.chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 12px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  align-items: flex-end;
+}
+#chatInput {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 10px 16px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  resize: none;
+  min-height: 42px;
+  max-height: 100px;
+  line-height: 1.4;
+}
+#chatInput:focus { outline: none; border-color: var(--purple); }
+#chatInput::placeholder { color: var(--text3); }
+.send-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--purple);
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, transform 0.1s;
+}
+.send-btn:active { transform: scale(0.92); }
+.send-btn svg { width: 18px; height: 18px; }
+
+/* ── SHOWS SCREEN ── */
+.show-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.show-time-pill {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 6px 10px;
+  text-align: center;
+  flex-shrink: 0;
+  min-width: 56px;
+}
+.show-time { font-size: 15px; font-weight: 800; color: var(--gold); }
+.show-timedate { font-size: 10px; color: var(--text3); font-weight: 600; }
+.show-info { flex: 1; }
+.show-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.show-loc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.notif-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 11px; font-weight: 700;
+  color: var(--text3);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.notif-btn.active {
+  background: rgba(139,110,245,0.15);
+  border-color: var(--purple);
+  color: var(--purple2);
+}
+
+.tip-card {
+  background: rgba(139,110,245,0.08);
+  border: 1px solid rgba(139,110,245,0.2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.tip-label {
+  font-size: 10px; font-weight: 800;
+  color: var(--purple2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.tip-text { font-size: 12px; font-weight: 600; color: var(--text2); line-height: 1.55; }
+
+/* ── SETTINGS OVERLAY ── */
+.settings-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: flex-end;
+}
+.settings-overlay.show { display: flex; }
+.settings-sheet {
+  background: var(--bg2);
+  border-radius: 20px 20px 0 0;
+  border: 1px solid var(--border2);
+  padding: 16px 16px calc(16px + var(--safe-bottom));
+  width: 100%;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.settings-handle {
+  width: 40px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+.settings-title { font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+.settings-row {
+  display: flex; align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-label { flex: 1; font-size: 13px; font-weight: 600; color: var(--text2); }
+.settings-value {
+  font-size: 13px; font-weight: 700; color: var(--purple2);
+}
+.api-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.api-input:focus { outline: none; border-color: var(--purple); }
+.save-btn {
+  width: 100%;
+  background: var(--purple);
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.setup-notice {
+  background: rgba(245,200,66,0.08);
+  border: 1px solid rgba(245,200,66,0.25);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.5;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* SPLASH */
+#splash {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 999;
+  transition: opacity 0.4s ease;
+}
+#splash.hide { opacity: 0; pointer-events: none; }
+.splash-castle { font-size: 64px; animation: castlePulse 2s ease infinite; }
+@keyframes castlePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+.splash-title { font-size: 26px; font-weight: 800; }
+.splash-title span { color: var(--gold); }
+.splash-sub { font-size: 13px; color: var(--text3); font-weight: 600; }
+.splash-bar {
+  width: 120px; height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.splash-fill {
+  height: 100%;
+  background: var(--purple);
+  border-radius: 2px;
+  animation: fillBar 1.8s ease forwards;
+}
+@keyframes fillBar { from{width:0} to{width:100%} }
+
+/* API KEY PROMPT */
+.api-prompt {
+  background: rgba(245,200,66,0.06);
+  border: 1px solid rgba(245,200,66,0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold2);
+  line-height: 1.5;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-castle">🏰</div>
+  <div class="splash-title">DLP <span>Navigator</span></div>
+  <div class="splash-sub">Disneyland Paris · 20 kwietnia 2026</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" fill="rgba(139,110,245,0.15)" stroke="rgba(139,110,245,0.4)" stroke-width="1.5"/>
+        <path d="M14 8 L16.5 13 L22 13.5 L18 17.5 L19 23 L14 20 L9 23 L10 17.5 L6 13.5 L11.5 13 Z" fill="#f5c842" stroke="#f5c842" stroke-width="0.5" stroke-linejoin="round"/>
+      </svg>
+      <span class="header-title">DLP <span>Navigator</span></span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="header-date">20 kwi '26</div>
+      <button onclick="showSettings()" style="background:none;border:none;cursor:pointer;padding:4px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(240,236,255,0.5)" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12h2m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCREENS -->
+  <div class="screens">
+
+    <!-- KOLEJKI -->
+    <div id="screen-kolejki" class="screen active">
+      <div id="apiNotice" class="api-prompt" onclick="showSettings()">
+        ⚙️ Dodaj klucz API Claude w ustawieniach, żeby aktywować AI Doradcę.
+      </div>
+
+      <!-- HOW TO USE BANNER -->
+      <div id="howToBanner" style="background:rgba(139,110,245,0.08);border:1px solid rgba(139,110,245,0.2);border-radius:14px;padding:12px 14px;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:800;color:var(--purple2);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">Kolejki na żywo</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text2);line-height:1.6">
+          Dane pobierane automatycznie z queue-times.com co 5 minut.<br>
+          Możesz też dotknąć dowolnej karty, by ręcznie wpisać czas z apki DLP.
+        </div>
+        <button onclick="document.getElementById('howToBanner').style.display='none'" style="margin-top:8px;background:none;border:none;color:var(--text3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;padding:0">Ukryj ✕</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span class="last-update" id="lastUpdate">Odświeżanie...</span>
+        <button onclick="fetchQueues()" id="refreshBtn" style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:6px 14px;color:var(--purple2);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Odśwież
+        </button>
+      </div>
+
+      <div id="alertBox" class="alert-box"></div>
+
+      <div class="section-label">⭐ Priorytety dnia — dotknij by wpisać czas</div>
+      <div id="queueList"></div>
+
+      <!-- MANUAL INPUT MODAL -->
+      <div id="inputModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:flex-end;justify-content:center;">
+        <div style="background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--border2);padding:20px 16px calc(20px + var(--safe-bottom));width:100%;max-width:480px;animation:slideUp 0.2s ease">
+          <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px"></div>
+          <div id="modalAttrName" style="font-size:16px;font-weight:800;margin-bottom:4px"></div>
+          <div id="modalAttrZone" style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:16px"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">CZAS OCZEKIWANIA (z oficjalnej apki DLP)</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+            <input type="number" id="waitInput" min="0" max="300" placeholder="np. 25"
+              style="flex:1;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:12px 16px;color:var(--text);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center"
+              onkeydown="if(event.key==='Enter')saveWaitTime()" />
+            <span style="font-size:16px;font-weight:700;color:var(--text3)">min</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button onclick="setWaitPreset(5)" style="flex:1;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--green);font-weight:800;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif">5</button>
+            <button onclick="setWaitPreset(10)" style="flex:1;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--green);font-weight:800;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif">10</button>
+            <button onclick="setWaitPreset(20)" style="flex:1;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--green);font-weight:800;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif">20</button>
+            <button onclick="setWaitPreset(30)" style="flex:1;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--amber);font-weight:800;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif">30</button>
+            <button onclick="setWaitPreset(45)" style="flex:1;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--amber);font-weight:800;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif">45</button>
+            <button onclick="setWaitPreset(60)" style="flex:1;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--red);font-weight:800;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif">60+</button>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="closeModal()" style="flex:1;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text3);font-weight:700;font-size:14px;cursor:pointer;font-family:'Nunito',sans-serif">Anuluj</button>
+            <button onclick="saveWaitTime()" style="flex:2;padding:12px;background:var(--purple);border:none;border-radius:12px;color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:'Nunito',sans-serif">Zapisz czas</button>
+          </div>
+          <button onclick="markClosed()" style="width:100%;margin-top:8px;padding:10px;background:rgba(240,96,96,0.1);border:1px solid rgba(240,96,96,0.2);border-radius:12px;color:var(--red);font-weight:700;font-size:12px;cursor:pointer;font-family:'Nunito',sans-serif">Atrakcja zamknięta (chwilowo)</button>
+        </div>
+      </div>
+
+      <div style="height: 16px"></div>
+    </div>
+
+    <!-- PLAN DNIA -->
+    <div id="screen-plan" class="screen">
+      <div class="section-label" style="margin-top:4px">Plan dnia — Disneyland Park</div>
+      <div id="timelineList"></div>
+      <div style="height: 16px"></div>
+    </div>
+
+    <!-- AI DORADCA -->
+    <div id="screen-chat" class="screen">
+      <div class="chat-wrap">
+        <div class="quick-chips" id="quickChips"></div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+          <textarea id="chatInput" placeholder="Zapytaj o kolejki, trasy, jedzenie..." rows="1"
+            oninput="autoGrow(this)" onkeydown="handleKey(event)"></textarea>
+          <button class="send-btn" onclick="sendChat()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARADY & SHOWS -->
+    <div id="screen-shows" class="screen">
+      <div class="tip-card">
+        <div class="tip-label">Wskazówka dnia</div>
+        <div class="tip-text">Disney Stars on Parade 🎆 — Wasz absolutny priorytet! Ustaw się 20 min przed przy lewej stronie Main Street (patrząc od zamku). Dzieci w pierwszym rzędzie przy barierce. Parada mija dwa razy dziennie (11:30 i 17:00) — warto zobaczyć oba seanse!</div>
+      </div>
+      <div class="section-label">Parady i shows</div>
+      <div id="showsList"></div>
+      <div class="section-label">Meet & Greet</div>
+      <div id="meetList"></div>
+      <div style="height: 16px"></div>
+    </div>
+
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('kolejki',this)" id="tab-kolejki">
+      <div class="tab-indicator"></div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Kolejki
+    </button>
+    <button class="tab" onclick="switchTab('plan',this)" id="tab-plan">
+      <div class="tab-indicator"></div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Plan dnia
+    </button>
+    <button class="tab" onclick="switchTab('chat',this)" id="tab-chat">
+      <div class="tab-indicator"></div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      AI Doradca
+    </button>
+    <button class="tab" onclick="switchTab('shows',this)" id="tab-shows">
+      <div class="tab-indicator"></div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Parady
+    </button>
+  </div>
+</div>
+
+
+<!-- INSTALL BANNER -->
+<div id="installBanner" style="display:none;position:fixed;bottom:calc(var(--tab-h) + var(--safe-bottom) + 8px);left:12px;right:12px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:12px 14px;z-index:90;display:none;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,0.4)">
+  <div style="width:42px;height:42px;flex-shrink:0">
+    <img src="icons/icon-192.png" style="width:42px;height:42px;border-radius:10px" onerror="this.style.display='none'"/>
+  </div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:13px;font-weight:800;color:var(--text)">Dodaj do ekranu głównego</div>
+    <div style="font-size:11px;color:var(--text3);font-weight:600;margin-top:2px">Zainstaluj DLP Navigator jako aplikację</div>
+  </div>
+  <button id="installBtn" onclick="triggerInstall()" style="background:var(--purple);border:none;border-radius:10px;padding:8px 14px;color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">Instaluj</button>
+  <button onclick="dismissInstall()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0 4px;line-height:1">×</button>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettings(event)">
+  <div class="settings-sheet" onclick="event.stopPropagation()">
+    <div class="settings-handle"></div>
+    <div class="settings-title">Ustawienia</div>
+    <div class="setup-notice">
+      🔑 Wpisz swój klucz Anthropic API, żeby aktywować AI Doradcę z Claude. Klucz jest zapisywany tylko lokalnie na tym urządzeniu.
+    </div>
+    <div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:4px">Klucz Anthropic API</div>
+    <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-api03-..." />
+    <div style="margin-top:12px">
+      <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px">Profil rodziny</div>
+      <div class="settings-row">
+        <span class="settings-label">Dominika</span>
+        <span class="settings-value">4 lata · 100 cm</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Kuba</span>
+        <span class="settings-value">8 lat · 140 cm</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Park</span>
+        <span class="settings-value">Disneyland Park</span>
+      </div>
+      <div class="settings-row" style="border:none">
+        <span class="settings-label">Data wizyty</span>
+        <span class="settings-value">20 kwi 2026</span>
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveSettings()">Zapisz ustawienia</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════
+const ATTRACTIONS = [
+  // ★ PRIORYTETY — must-do dla tej rodziny
+  { id:'minnie-meet', name:"Minnie Mouse Meet & Greet 💕", emoji:'🎀', zone:'Fantasyland — Town Square Theater', forBoth:true, priority:true, minHeight:null,
+    note:'Dominika będzie w siódmym niebie! Przyjdź zaraz po otwarciu — kolejka rośnie szybko.' },
+  { id:'peter-pan', name:"Peter Pan's Flight", emoji:'🧚', zone:'Fantasyland', forBoth:true, priority:true, minHeight:null,
+    note:'Spokojny lot nad Londynem w wagoniku — idealny dla Was. Rope-drop zaraz po Meet & Greet.' },
+  { id:'its-small-world', name:"It's a Small World", emoji:'🌍', zone:'Fantasyland', forBoth:true, priority:true, minHeight:null,
+    note:'IDEALNE dla Was! Spokojna łódka przez kolorowe krainy świata. Dominika oszaleje z zachwytu.' },
+  { id:'pirates', name:'Pirates of the Caribbean', emoji:'🏴‍☠️', zone:'Adventureland', forBoth:true, priority:true, minHeight:null,
+    note:'Klasyczna łódka przez klimatyczne sceny. Spokojne tempo, zero szarpnięć.' },
+  { id:'phantom', name:'Phantom Manor', emoji:'👻', zone:'Frontierland', forBoth:true, priority:true, minHeight:null,
+    note:'Nawiedzony dwór — wózek jedzie spokojnie. Może być nieco mroczny dla Dominiki, oceń na miejscu.' },
+  // ★ WARTO — pasują do preferencji rodziny
+  { id:'buzz', name:'Buzz Lightyear Laser Blast', emoji:'🚀', zone:'Discoveryland', forBoth:true, priority:false, minHeight:null,
+    note:'Strzelanka w powolnym wózku — żadnych gwałtownych ruchów. Kuba vs tata = rywalizacja.' },
+  { id:'dumbo', name:'Dumbo the Flying Elephant', emoji:'🐘', zone:'Fantasyland', forBoth:true, priority:false, minHeight:null,
+    note:'Leci góra-dół, sterowany przez dziecko. Nie kręci się w poziomie z dużą prędkością.' },
+  { id:'canal-boats', name:'Storybook Land Canal Boats', emoji:'⛵', zone:'Fantasyland', forBoth:true, priority:false, minHeight:null,
+    note:'Spokojna łódka przez miniaturowe krainy z bajek Disneya. Cudowna dla Dominiki.' },
+  // ✗ POMIJAMY
+  { id:'btm', name:'Big Thunder Mountain — pomijamy', emoji:'⛏️', zone:'Frontierland', forBoth:false, kubaOnly:false, priority:false, minHeight:102,
+    note:'Szybki rollercoaster — nie jest w stylu tej rodziny. Pominięty świadomie.' },
+  { id:'teacups', name:"Mad Hatter's Tea Cups — pomijamy", emoji:'☕', zone:'Fantasyland', forBoth:false, priority:false, minHeight:null,
+    note:'Szybkie wirowanie — dokładnie to, czego chcecie uniknąć.' },
+]
+
+const PLAN = [
+  { time:'8:30', title:'Przyjazd i wejście do parku',
+    sub:'Brama główna Main Street. Przebierz się, zjedz śniadanie z domu na ławeczce przy wejściu — bez pośpiechu.',
+    type:'all', badge:'all', dot:'#4ecf8a' },
+
+  { time:'9:00', title:'🎀 Minnie Mouse Meet & Greet — PRIORYTET!',
+    sub:'Town Square Theater, natychmiast po otwarciu. Kolejka rośnie lawinowo po 9:30. Dominika zasługuje na to pierwsze spotkanie!',
+    type:'attraction', badge:'kids', dot:'#f5c842' },
+
+  { time:'9:30', title:"Peter Pan's Flight",
+    sub:'2 minuty drogi z Town Square. Spokojny lot wagonem nad nocnym Londynem — właśnie to lubicie.',
+    type:'attraction', badge:'kids', dot:'#8b6ef5' },
+
+  { time:'10:10', title:"It's a Small World 🌍",
+    sub:'Łódka przez kolorowe krainy świata. Spokojne tempo, przepiękne dekoracje. Dominika będzie zachwycona — jedźcie dwa razy jeśli chcecie!',
+    type:'attraction', badge:'kids', dot:'#8b6ef5' },
+
+  { time:'11:00', title:'Storybook Land Canal Boats ⛵',
+    sub:'Spokojna łódka przez miniaturowe krainy bajek Disneya — Kopciuszek, Pinokio, Małe Syrenie. Cicha kolejka, wielkie wrażenia.',
+    type:'attraction', badge:'kids', dot:'#8b6ef5' },
+
+  { time:'11:30', title:'🎆 Disney Stars on Parade — PRIORYTET!',
+    sub:'Zajmij miejsce 20 min wcześniej po lewej stronie Main Street patrząc od zamku — dzieci widzą wszystko z przodu. To Wasz absolutny priorytet!',
+    type:'show', badge:'show', dot:'#f59c38' },
+
+  { time:'12:30', title:'Lunch — piknik Waszym jedzeniem 🧺',
+    sub:'Ławki w Fantasyland przy fontannie lub przy It\'s a Small World. Możecie też usiąść na trawie w Discoveryland. Parkowanie jedzenia z zewnątrz jest dozwolone!',
+    type:'meal', badge:'meal', dot:'#f59c38' },
+
+  { time:'13:15', title:'Pirates of the Caribbean 🏴‍☠️',
+    sub:'Łódka przez pirackie sceny — spokojne tempo, klimatyzacja, świetna narracja. Jeden mały zjazd na początku, nic strasznego.',
+    type:'attraction', badge:'kids', dot:'#8b6ef5' },
+
+  { time:'14:00', title:'Phantom Manor 👻',
+    sub:'Nawiedzony dwór z historią. Wózek jedzie powoli przez sceny. Ostrzeżenie: jest dość mroczny — Dominika może potrzebować objęcia na kolanach!',
+    type:'attraction', badge:'kids', dot:'#8b6ef5' },
+
+  { time:'14:50', title:'Przerwa i ładowanie baterii 💛',
+    sub:'Wróćcie do Fantasyland. Lody, woda, odpoczynek na ławce. Dzieci w wieku 4 i 8 lat potrzebują tej pauzy — nie pomijajcie!',
+    type:'rest', badge:'rest', dot:'#f5c842' },
+
+  { time:'15:30', title:'Buzz Lightyear Laser Blast 🚀',
+    sub:'Powolny wózek + strzelanie do celów. Kuba vs tata — kto zgromadzi więcej punktów? Dominika też strzela!',
+    type:'attraction', badge:'kids', dot:'#8b6ef5' },
+
+  { time:'16:20', title:'Dumbo the Flying Elephant 🐘',
+    sub:'Lekkie unoszenie góra-dół sterowane przez dziecko. Kolejki krótsze po 16:00. Dominika przy sterowniku!',
+    type:'attraction', badge:'kids', dot:'#8b6ef5' },
+
+  { time:'16:50', title:'Wolny czas + pamiątki dla Dominiki 🛍️',
+    sub:'World of Disney lub sklepy w Fantasyland. Myszka Minnie w każdej formie — pałąki z uszami, pluszaki, kubki. Ustal budżet z góry!',
+    type:'rest', badge:'rest', dot:'#f5c842' },
+
+  { time:'17:00', title:'🎆 Disney Stars on Parade — 2. seans!',
+    sub:'Drugi seans to szansa na lepsze miejsce i spokojniejszą atmosferę. Ustaw się od Central Plaza z widokiem na zamek.',
+    type:'show', badge:'show', dot:'#f59c38' },
+
+  { time:'18:00', title:'Budżetowy obiad — Fuente del Oro lub Colonel Hathi\'s 🌮',
+    sub:'Fuente del Oro (Frontierland): burrito, tacos ~10-12€. Colonel Hathi\'s Pizza (Adventureland): pizza dla dzieci ~9€. Bez rezerwacji, szybko.',
+    type:'meal', badge:'meal', dot:'#f59c38' },
+
+  { time:'19:30', title:'Dream... and Shine Brighter! ✨',
+    sub:'Projekcja laserowa na zamku Śpiącej Królewny. Absolutnie spektakularne — Dominika nie zapomni tego do końca życia.',
+    type:'show', badge:'show', dot:'#8b6ef5' },
+
+  { time:'21:30', title:'Zajmij miejsce na Illuminations',
+    sub:'Central Plaza, naprzeciwko zamku, 1. rząd przy barierce. Przyjdź 30 min wcześniej z dziećmi.',
+    type:'rest', badge:'rest', dot:'#f5c842' },
+
+  { time:'22:00', title:'🎆 Disney Illuminations — FINAŁ!',
+    sub:'Fajerwerki + projekcja na zamku. 20 minut magii. Dominika na ramionach taty = idealne zakończenie dnia.',
+    type:'show', badge:'show', dot:'#f5c842' },
+]
+
+const SHOWS = [
+  { time:'11:30', name:'🎆 Disney Stars on Parade', loc:'Main Street U.S.A. → Central Plaza', note:'Seans 1 — zajmij miejsce o 11:10!' },
+  { time:'17:00', name:'🎆 Disney Stars on Parade', loc:'Main Street U.S.A. → Central Plaza', note:'Seans 2 — widok na zamek od Central Plaza' },
+  { time:'19:30', name:'✨ Dream... and Shine Brighter!', loc:'Sleeping Beauty Castle — projekcja laserowa', note:'Spektakl na zamku, ok. 15 minut' },
+  { time:'22:00', name:'🎇 Disney Illuminations', loc:'Sleeping Beauty Castle — fajerwerki', note:'FINAŁ DNIA — przyjdź 30-45 min wcześniej!' },
+]
+
+const MEETS = [
+  { time:'9:00', name:'🎀 Minnie Mouse Meet & Greet', loc:'Town Square Theater, Main Street', note:'PRIORYTET! Rope-drop — biegiem od wejścia!' },
+  { time:'10:00', name:'Mickey Mouse Meet & Greet', loc:'Town Square Theater, Main Street', note:'Zaraz po Minnie — mogą być razem' },
+  { time:'10:30', name:'Princess Pavilion 👸', loc:'Fantasyland', note:'Kopciuszek, Aurora, Tiana — Dominika będzie zachwycona' },
+  { time:'12:00', name:'Characters in the Park', loc:'Różne miejsca — sprawdź w apce DLP', note:'Losowe spotkania z postaciami w ciągu dnia' },
+]
+
+const QUICK_QUESTIONS = [
+  "Co teraz? Mamy preferencje: spokojne atrakcje, bez wirowania, Dominika kocha Minnie.",
+  "Jakie spokojne atrakcje w Fantasyland możemy teraz zrobić?",
+  "Gdzie kupić najtańszy lunch w parku lub gdzie usiąść z własnym jedzeniem?",
+  "Gdzie najlepsze miejsce na Disney Stars on Parade z małymi dziećmi?",
+  "Dominika jest zmęczona — co teraz, bez kolejki i bez emocji?",
+  "Ile przed Illuminations zająć miejsca i dokładnie gdzie stanąć?",
+]
+
+const SYSTEM_PROMPT = `Jesteś ekspertem od Disneyland Paris i osobistym przewodnikiem tej konkretnej rodziny.
+
+PROFIL RODZINY:
+- Dominika: 4 lata, 100 cm — uwielbia Myszkę Minnie 💕
+- Kuba: 8 lat, 140 cm
+- 2 dorosłych
+- Park: Disneyland Park (klasyczny) — NIE Disney Adventure World
+- Data: 20 KWIETNIA 2026 (poniedziałek) — wiosenne wakacje EU, obłożenie WYSOKIE
+
+PREFERENCJE RODZINY (BARDZO WAŻNE):
+1. ✅ Dominika UWIELBIA Myszkę Minnie → priorytet: Meet & Greet z Minnie rano
+2. ✅ Lubią spokojne atrakcje w wagoniku/łódce przez klimatyczne krainy (dark rides)
+3. ❌ NIE lubią szybkich rollercoasterów → BIG THUNDER MOUNTAIN pomijamy całkowicie
+4. ❌ NIE lubią szybko wirujących karuzel → MAD HATTER'S TEA CUPS pomijamy
+5. ✅ Jedzenie: przynoszą własne jedzenie z zewnątrz na śniadanie i przekąski; obiad chcą budżetowo w parku
+6. ✅ Parady są ABSOLUTNYM priorytetem — Disney Stars on Parade to must-see (dwa razy jeśli możliwe)
+
+IDEALNE ATRAKCJE DLA TEJ RODZINY (w kolejności priorytetu):
+1. Minnie Mouse Meet & Greet (Town Square Theater) — od razu rano!
+2. Peter Pan's Flight — spokojny wagonik nad Londynem
+3. It's a Small World — łódka przez kolorowe krainy świata, Dominika pokocha
+4. Pirates of the Caribbean — łódka przez pirackie sceny
+5. Phantom Manor — wózek przez nawiedzony dwór (może być mroczny dla 4-latki)
+6. Storybook Land Canal Boats — spokojna łódka przez bajkowe miniatury
+7. Buzz Lightyear Laser Blast — powolny wózek + strzelanie
+8. Dumbo — delikatne góra-dół sterowane przez dziecko
+
+BUDŻETOWE JEDZENIE bez rezerwacji:
+- Fuente del Oro (Frontierland) — tacos/burrito ~10-12€, szybko
+- Colonel Hathi\'s Pizza Outpost (Adventureland) — pizza ~9€, kid-friendly
+- Hakuna Matata (Adventureland) — nuggetsy, burgery ~10€
+- Własne jedzenie można jeść na ławkach w Fantasyland (fontanna), Discoveryland (trawnik), lub przy It\'s a Small World
+- DLP nie zabrania wnoszenia własnego jedzenia
+
+PARADY — strategia miejsc:
+- Disney Stars on Parade: ustaw się 20 min wcześniej, lewa strona Main Street (patrząc od zamku), 1. rząd przy barierce
+- Disney Illuminations (22:00): przyjdź 30-45 min wcześniej, Central Plaza naprzeciwko zamku
+
+PLAN DNIA (orientacyjny):
+9:00 Minnie M&G → 9:30 Peter Pan → 10:10 It's a Small World → 11:00 Canal Boats → 11:30 Parada → 12:30 Własny lunch → 13:15 Pirates → 14:00 Phantom Manor → 15:30 Buzz → 16:20 Dumbo → 17:00 Parada 2 → 18:00 Budżetowy obiad → 19:30 Dream show → 22:00 Illuminations
+
+ODPOWIADAJ:
+- Po polsku, konkretnie i z entuzjazmem
+- Max 3-4 zdania lub krótkie punkty
+- Uwzględniaj preferencje (spokojne atrakcje, bez wirowania, bez coasterów)
+- Jeśli kolejka > 35 min — natychmiast zaproponuj alternatywę pasującą do profilu rodziny
+- Pamiętaj: parady są priorytetem, Dominika = Minnie Mouse`
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let queueData = {};
+let chatHistory = [];
+let notifSet = new Set();
+let apiKey = '';
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load', () => {
+  apiKey = localStorage.getItem('dlp_api_key') || '';
+  if (apiKey) {
+    document.getElementById('apiNotice').style.display = 'none';
+    document.getElementById('apiKeyInput').value = apiKey;
+  }
+
+  renderQueues();
+  renderTimeline();
+  renderShows();
+  renderChat();
+  updateCurrentStep();
+
+  // Auto-fetch live queue times immediately, then every 5 minutes
+  fetchQueues();
+  fetchInterval = setInterval(fetchQueues, 5 * 60 * 1000);
+
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hide');
+    setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
+  }, 2000);
+
+  setInterval(updateCurrentStep, 30000);
+});
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (screen) {
+    screen.classList.add('active');
+    void screen.offsetHeight;
+  }
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+//  QUEUE SCREEN
+// ═══════════════════════════════════════════
+// ── LIVE QUEUE FETCH ──
+// Ride ID map: queue-times.com ride IDs for Disneyland Park Paris (park 4)
+const RIDE_ID_MAP = {
+  'minnie-meet':   13,   // Meet Mickey Mouse (same location, check signage)
+  'peter-pan':     22,
+  'its-small-world': 19,
+  'pirates':        3,
+  'phantom':       26,
+  'buzz':           5,
+  'dumbo':         18,
+  'canal-boats':   21,   // Le Pays des Contes de Fées (Storybook Land equivalent)
+  'btm':           25,
+  'teacups':       20,
+};
+
+let fetchInterval = null;
+
+async function fetchQueues() {
+  const btn = document.getElementById('refreshBtn');
+  const status = document.getElementById('lastUpdate');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+  status.textContent = 'Pobieranie danych...';
+
+  try {
+    const res = await fetch('https://queue-times.com/parks/4/queue_times.json', {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-cache',
+    });
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    // Flatten all rides from all lands
+    const allRides = [];
+    (data.lands || []).forEach(land => (land.rides || []).forEach(r => allRides.push(r)));
+    (data.rides || []).forEach(r => allRides.push(r));
+
+    // Build lookup by ride ID
+    const byId = {};
+    allRides.forEach(r => { byId[r.id] = r; });
+
+    // Update queueData for each mapped attraction
+    let updated = 0;
+    Object.entries(RIDE_ID_MAP).forEach(([attrId, rideId]) => {
+      const ride = byId[rideId];
+      if (!ride) return;
+      if (!ride.is_open) {
+        queueData[attrId] = 'closed';
+      } else {
+        queueData[attrId] = ride.wait_time ?? 0;
+      }
+      const now = new Date();
+      queueTimestamps[attrId] = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+      updated++;
+    });
+
+    const now = new Date();
+    status.textContent = 'Aktualizacja: ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0') + ' · źródło: queue-times.com';
+    renderQueues();
+
+    // Show source credit in alert box if no short queues
+    const alertBox = document.getElementById('alertBox');
+    if (!alertBox.classList.contains('show')) {
+      alertBox.classList.add('show');
+      alertBox.style.background = 'rgba(139,110,245,0.08)';
+      alertBox.style.borderColor = 'rgba(139,110,245,0.2)';
+      alertBox.style.color = 'var(--purple2)';
+      alertBox.textContent = '✓ Dane pobrane dla ' + updated + ' atrakcji · Powered by Queue-Times.com';
+      setTimeout(() => {
+        alertBox.style.background = '';
+        alertBox.style.borderColor = '';
+        alertBox.style.color = '';
+        renderQueues(); // re-render will set correct alert state
+      }, 4000);
+    }
+
+  } catch (err) {
+    console.warn('Queue fetch failed:', err.message);
+    status.textContent = 'Brak połączenia — wpisz czasy ręcznie';
+    const alertBox = document.getElementById('alertBox');
+    alertBox.classList.add('show');
+    alertBox.style.background = 'rgba(240,96,96,0.08)';
+    alertBox.style.borderColor = 'rgba(240,96,96,0.2)';
+    alertBox.style.color = 'var(--red)';
+    alertBox.textContent = '⚠ Nie udało się pobrać danych. Wpisz czasy ręcznie dotykając karty atrakcji.';
+    setTimeout(() => {
+      alertBox.style.background = '';
+      alertBox.style.borderColor = '';
+      alertBox.style.color = '';
+      renderQueues();
+    }, 5000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+// ── MODAL STATE ──
+let activeAttrId = null;
+
+
+
+function renderQueues() {
+  const list = document.getElementById('queueList');
+  list.innerHTML = '';
+
+  const priorities = ATTRACTIONS.filter(a => a.priority);
+  const others = ATTRACTIONS.filter(a => !a.priority);
+
+  const renderGroup = (attrs, label) => {
+    if (attrs.length === 0) return;
+    const lbl = document.createElement('div');
+    lbl.className = 'section-label';
+    lbl.style.marginTop = '4px';
+    lbl.textContent = label;
+    list.appendChild(lbl);
+
+    attrs.forEach(attr => {
+      const rawWait = queueData[attr.id];
+      const isClosed = rawWait === 'closed';
+      const hasData = rawWait !== undefined;
+      const wait = isClosed ? null : (hasData ? rawWait : null);
+
+      let color = 'var(--text3)';
+      let waitDisplay = '—';
+      let statusText = 'Dotknij by wpisać';
+
+      if (isClosed) {
+        waitDisplay = '✕';
+        statusText = 'Zamknięta';
+        color = 'var(--red)';
+      } else if (wait !== null) {
+        color = wait < 25 ? 'var(--green)' : wait < 45 ? 'var(--amber)' : 'var(--red)';
+        waitDisplay = wait;
+        statusText = wait < 25 ? '✓ Jedź teraz!' : wait < 45 ? '~ Akceptowalne' : '✗ Długa kolejka';
+      }
+
+      const tagsHtml = attr.forBoth
+        ? '<span class="tag tag-both">Dominika ✓ · Kuba ✓</span>'
+        : (attr.kubaOnly ? '<span class="tag tag-kuba">Kuba ✓ · min. ' + attr.minHeight + ' cm</span>' : '<span class="tag" style="background:rgba(240,96,96,0.1);color:var(--red)">✗ Pomijamy</span>');
+      const priorityTag = attr.priority ? '<span class="tag tag-priority">Must-do</span>' : '';
+      const noteHtml = attr.note ? `<div style="font-size:10px;color:var(--text3);font-weight:600;margin-top:4px;line-height:1.4">${attr.note}</div>` : '';
+      const updatedAt = queueTimestamps[attr.id]
+        ? '<span style="font-size:10px;color:var(--text3);font-weight:600"> · ' + queueTimestamps[attr.id] + '</span>'
+        : '';
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.cursor = attr.forBoth || attr.kubaOnly ? 'pointer' : 'default';
+      card.style.opacity = (!attr.forBoth && !attr.kubaOnly) ? '0.45' : '1';
+      if (attr.forBoth || attr.kubaOnly) card.onclick = () => openModal(attr.id);
+      card.innerHTML = `
+        <div class="attr-row">
+          <div class="attr-emoji">${attr.emoji}</div>
+          <div class="attr-info">
+            <div class="attr-name">${attr.name}${updatedAt}</div>
+            <div style="font-size:11px;color:var(--text3);font-weight:600;margin-top:1px">${attr.zone}</div>
+            <div class="attr-tags">${tagsHtml}${priorityTag}</div>
+            ${noteHtml}
+          </div>
+          <div class="wait-block">
+            <div class="wait-num" style="color:${color};font-size:${isClosed ? '18px' : '26px'}">${waitDisplay}</div>
+            ${!isClosed ? '<div class="wait-unit">min</div>' : ''}
+            <div class="wait-status" style="color:${color}">${statusText}</div>
+          </div>
+        </div>`;
+      list.appendChild(card);
+    });
+  };
+
+  renderGroup(priorities, '⭐ Priorytety dla Waszej rodziny');
+  renderGroup(others, 'Pozostałe (spokojne) + pomijane');
+
+  // Alert for short queues (only user-entered data)
+  const shortQueues = ATTRACTIONS.filter(a => {
+    const w = queueData[a.id];
+    return typeof w === 'number' && w < 20 && a.priority;
+  });
+  const alertBox = document.getElementById('alertBox');
+  if (shortQueues.length > 0) {
+    alertBox.classList.add('show');
+    alertBox.textContent = '🎯 Teraz warto! ' + shortQueues.map(a => a.name + ' (' + queueData[a.id] + ' min)').join(' · ');
+  } else {
+    alertBox.classList.remove('show');
+  }
+
+  // Update lastUpdate
+  const entered = Object.keys(queueData).length;
+  if (entered > 0) {
+    document.getElementById('lastUpdate').textContent = 'Wprowadzono: ' + entered + '/' + ATTRACTIONS.length + ' atrakcji';
+  }
+}
+
+// ── MODAL ──
+const queueTimestamps = {};
+
+function openModal(attrId) {
+  activeAttrId = attrId;
+  const attr = ATTRACTIONS.find(a => a.id === attrId);
+  document.getElementById('modalAttrName').textContent = attr.emoji + ' ' + attr.name;
+  document.getElementById('modalAttrZone').textContent = attr.zone + (attr.minHeight ? ' · min. ' + attr.minHeight + ' cm' : '');
+  const current = queueData[attrId];
+  document.getElementById('waitInput').value = (typeof current === 'number') ? current : '';
+  document.getElementById('inputModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('waitInput').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('inputModal').style.display = 'none';
+  activeAttrId = null;
+}
+
+function setWaitPreset(val) {
+  document.getElementById('waitInput').value = val;
+}
+
+function saveWaitTime() {
+  if (!activeAttrId) return;
+  const val = parseInt(document.getElementById('waitInput').value);
+  if (isNaN(val) || val < 0) { closeModal(); return; }
+  queueData[activeAttrId] = val;
+  const now = new Date();
+  queueTimestamps[activeAttrId] = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+  closeModal();
+  renderQueues();
+
+  // Auto-suggest via AI if key is set
+  if (apiKey) {
+    const attr = ATTRACTIONS.find(a => a.id === activeAttrId);
+    const allQueues = ATTRACTIONS.filter(a => typeof queueData[a.id] === 'number')
+      .map(a => a.name + ': ' + queueData[a.id] + ' min').join(', ');
+    if (val > 35 && attr.priority) {
+      const msg = attr.name + ' ma ' + val + ' min kolejki. Mam dane: ' + allQueues + '. Co teraz zaproponujesz zamiast?';
+      switchTab('chat', document.getElementById('tab-chat'));
+      setTimeout(() => sendMessage(msg), 300);
+    }
+  }
+}
+
+function markClosed() {
+  if (!activeAttrId) return;
+  queueData[activeAttrId] = 'closed';
+  const now = new Date();
+  queueTimestamps[activeAttrId] = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+  closeModal();
+  renderQueues();
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', e => {
+  const modal = document.getElementById('inputModal');
+  if (e.target === modal) closeModal();
+});
+
+// ═══════════════════════════════════════════
+//  PLAN / TIMELINE
+// ═══════════════════════════════════════════
+function renderTimeline() {
+  const list = document.getElementById('timelineList');
+  list.innerHTML = '';
+  PLAN.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'timeline-item';
+    div.id = 'plan-item-' + i;
+    const badgeMap = {
+      kids: '<span class="badge badge-kids">Dominika ✓ · Kuba ✓</span>',
+      kuba: '<span class="badge badge-kuba">Kuba ✓ (min. 102 cm)</span>',
+      meal: '<span class="badge badge-meal">🍽 Posiłek</span>',
+      show: '<span class="badge badge-show">✨ Show / Parada</span>',
+      rest: '<span class="badge badge-rest">💛 Przerwa</span>',
+      all:  '<span class="badge badge-kids">Cała rodzina</span>',
+    };
+    div.innerHTML = `
+      <div class="tl-left">
+        <div class="tl-time">${item.time}</div>
+        <div class="tl-dot" style="background:${item.dot}"></div>
+        ${i < PLAN.length - 1 ? '<div class="tl-line"></div>' : ''}
+      </div>
+      <div class="tl-card" id="tl-card-${i}">
+        <div class="tl-title">${item.title}</div>
+        <div class="tl-sub">${item.sub}</div>
+        <div class="tl-badges">${badgeMap[item.badge] || ''}</div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function updateCurrentStep() {
+  const now = new Date();
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+  PLAN.forEach((item, i) => {
+    const [h, m] = item.time.split(':').map(Number);
+    const itemMins = h * 60 + m;
+    const nextMins = i < PLAN.length - 1
+      ? (() => { const [nh,nm] = PLAN[i+1].time.split(':').map(Number); return nh*60+nm; })()
+      : 24*60;
+    const card = document.getElementById('tl-card-' + i);
+    if (!card) return;
+    card.classList.remove('current','done');
+    if (currentMins >= itemMins && currentMins < nextMins) card.classList.add('current');
+    else if (currentMins >= nextMins) card.classList.add('done');
+  });
+}
+
+// ═══════════════════════════════════════════
+//  SHOWS
+// ═══════════════════════════════════════════
+function renderShows() {
+  renderShowList('showsList', SHOWS);
+  renderShowList('meetList', MEETS);
+}
+
+function renderShowList(containerId, items) {
+  const list = document.getElementById(containerId);
+  items.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'show-card';
+    card.innerHTML = `
+      <div class="show-time-pill">
+        <div class="show-time">${item.time}</div>
+        <div class="show-timedate">20 kwi</div>
+      </div>
+      <div class="show-info">
+        <div class="show-name">${item.name}</div>
+        <div class="show-loc">${item.loc}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;font-weight:600">${item.note}</div>
+      </div>
+      <button class="notif-btn" id="notif-${containerId}-${i}" onclick="toggleNotif('${containerId}','${i}','${item.time}','${item.name}')">
+        ⏰ -30
+      </button>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleNotif(listId, idx, time, name) {
+  const btn = document.getElementById('notif-' + listId + '-' + idx);
+  const key = listId + idx;
+  if (notifSet.has(key)) {
+    notifSet.delete(key);
+    btn.classList.remove('active');
+    btn.textContent = '⏰ -30';
+  } else {
+    notifSet.add(key);
+    btn.classList.add('active');
+    btn.textContent = '✓ Ustawione';
+    if ('Notification' in window) {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') {
+          const [h, m] = time.split(':').map(Number);
+          const showTime = new Date(2026, 3, 20, h, m);
+          const notifTime = new Date(showTime.getTime() - 30 * 60 * 1000);
+          const delay = notifTime.getTime() - Date.now();
+          if (delay > 0) {
+            setTimeout(() => new Notification('⏰ DLP Navigator', {
+              body: name + ' za 30 minut! Idź zająć miejsce.',
+              icon: '🏰'
+            }), delay);
+          }
+        }
+      });
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+//  CHAT / AI
+// ═══════════════════════════════════════════
+function renderChat() {
+  const chips = document.getElementById('quickChips');
+  QUICK_QUESTIONS.forEach(q => {
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.textContent = q.length > 32 ? q.slice(0, 30) + '…' : q;
+    chip.onclick = () => sendMessage(q);
+    chips.appendChild(chip);
+  });
+
+  // Welcome message
+  addMessage('ai', 'Cześć! Jestem Twoim przewodnikiem na dziś. 🏰\n\nMam załadowany plan dla Dominiki (4 l.) i Kuby (8 l.) w Disneyland Park na 20 kwietnia. Zapytaj mnie o kolejki, trasy, jedzenie — odpowiem natychmiast!\n\n💡 Dodaj klucz API w ustawieniach ⚙️ żeby aktywować prawdziwego Claude AI.');
+}
+
+function addMessage(role, text) {
+  const area = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.style.whiteSpace = 'pre-wrap';
+  div.textContent = text;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+  sendMessage(text);
+}
+
+async function sendMessage(text) {
+  addMessage('user', text);
+
+  const thinking = addMessage('thinking', 'Myślę...');
+  chatHistory.push({ role: 'user', content: text });
+
+  // Build context with current queue data
+  const queueContext = ATTRACTIONS.map(a => {
+    const w = queueData[a.id] ?? a.demo;
+    return `${a.name}: ${w} min`;
+  }).join(', ');
+
+  const now = new Date();
+  const timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+  const fullSystem = SYSTEM_PROMPT + '\n\nAKTUALNY CZAS: ' + timeStr + '\nAKTUALNE KOLEJKI: ' + queueContext;
+
+  if (!apiKey) {
+    thinking.remove();
+    chatHistory.push({ role:'assistant', content: getLocalResponse(text) });
+    addMessage('ai', chatHistory[chatHistory.length-1].content);
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        system: fullSystem,
+        messages: chatHistory.slice(-10),
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API Error');
+    }
+
+    const data = await res.json();
+    const reply = data.content[0]?.text || 'Brak odpowiedzi.';
+    thinking.remove();
+    chatHistory.push({ role: 'assistant', content: reply });
+    addMessage('ai', reply);
+
+  } catch (e) {
+    thinking.remove();
+    const errMsg = e.message.includes('401') || e.message.includes('auth')
+      ? '❌ Nieprawidłowy klucz API. Sprawdź ustawienia ⚙️.'
+      : '⚠️ Błąd połączenia. Odpowiem lokalnie:\n\n' + getLocalResponse(text);
+    addMessage('ai', errMsg);
+  }
+}
+
+function getLocalResponse(text) {
+  const t = text.toLowerCase();
+  if (t.includes('co teraz') || t.includes('rekomendac')) {
+    const best = ATTRACTIONS.filter(a => a.forBoth && a.priority)
+      .sort((a,b) => (queueData[a.id]??a.demo) - (queueData[b.id]??b.demo))[0];
+    const w = queueData[best.id] ?? best.demo;
+    return `🎯 Idź teraz do ${best.name}! Kolejka wynosi tylko ${w} min — to najkrótsza wśród priorytetów. Oboje dzieci mogą wejść bez ograniczeń wzrostu.`;
+  }
+  if (t.includes('thunder') || t.includes('btm') || t.includes('alternatywa')) {
+    return `🔄 Alternatywa dla Big Thunder Mountain:\n\n• Pirates of the Caribbean (aktualnie ${queueData['pirates'] ?? 22} min) — oboje dzieci, klimatyzacja!\n• Phantom Manor (~20 min) — obok BTM, Dominika też może\n• Buzz Lightyear (${queueData['buzz'] ?? 28} min) — Discoveryland, świetna zabawa`;
+  }
+  if (t.includes('lunch') || t.includes('jeść') || t.includes('restaura')) {
+    return `🍽️ Bez rezerwacji, kid-friendly:\n\n• Cowboy Cookout BBQ (Frontierland) — najlepszy wybór, duże porcje, tematyczne\n• Colonel Hathi\'s Pizza Outpost (Adventureland) — pizza, szybko\n• Fuente del Oro (Frontierland) — meksykańskie, tuż obok BTM\n\nNajlepszy czas na lunch: 11:45–12:15 lub 13:15–14:00 (omijasz szczyt).`;
+  }
+  if (t.includes('parada') || t.includes('miejsce')) {
+    return `🎭 Disney Stars on Parade — najlepsze miejsca:\n\n• Central Plaza (naprzeciwko zamku) — widok na zamek w tle\n• Prawa strona Main Street (idąc od wejścia) — pochód idzie w Twoją stronę\n• Przyjdź 20-25 min przed paradą żeby złapać miejsce przy barierze dla dzieci.`;
+  }
+  if (t.includes('illumin') || t.includes('wieczór')) {
+    return `✨ Disney Illuminations — wskazówki:\n\n• Ustaw się 45 min przed, od strony Central Plaza\n• Stań naprzeciwko zamku, nie z boku\n• Z dziećmi — pierwsza linia przy barierce, ale przyjedź wcześnie!\n• Czas trwania: ok. 20 minut. Warto!`;
+  }
+  if (t.includes('dominika') || t.includes('zmęczona') || t.includes('odpoczy')) {
+    return `💛 Propozycje dla Dominiki gdy jest zmęczona:\n\n• Le Carrousel de Lancelot — łagodna, może jeździć w nieskończoność\n• Boutique de la Belle au Bois Dormant (sklep w zamku) — eksploracja bez kolejki\n• Lody na Main Street + ławka przy fontannie\n• Storytelling at Videopolis jeśli akurat gra`;
+  }
+  return `Jestem w trybie offline — aktywuj Claude AI w ustawieniach ⚙️ żeby dostać pełne odpowiedzi. Na podstawie danych mam dla Ciebie: najkrótsza kolejka teraz to ${ATTRACTIONS.filter(a=>a.forBoth).sort((a,b)=>(queueData[a.id]??a.demo)-(queueData[b.id]??b.demo))[0].name} (${queueData[ATTRACTIONS.filter(a=>a.forBoth).sort((a,b)=>(queueData[a.id]??a.demo)-(queueData[b.id]??b.demo))[0].id] ?? ATTRACTIONS.filter(a=>a.forBoth).sort((a,b)=>(queueData[a.id]??a.demo)-(queueData[b.id]??b.demo))[0].demo} min).`;
+}
+
+// ═══════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════
+function showSettings() {
+  document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings(e) {
+  if (e.target === document.getElementById('settingsOverlay')) {
+    document.getElementById('settingsOverlay').classList.remove('show');
+  }
+}
+
+function saveSettings() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (key) {
+    apiKey = key;
+    localStorage.setItem('dlp_api_key', key);
+    document.getElementById('apiNotice').style.display = 'none';
+  }
+  document.getElementById('settingsOverlay').classList.remove('show');
+  addMessage('ai', '✅ Ustawienia zapisane! Klucz API aktywny — teraz odpowiadam z pełną mocą Claude AI. Zapytaj o cokolwiek! 🏰');
+  switchTab('chat', document.getElementById('tab-chat'));
+}
+
+// ═══════════════════════════════════════════
+//  SERVICE WORKER
+// ═══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// ═══════════════════════════════════════════
+//  PWA INSTALL PROMPT
+// ═══════════════════════════════════════════
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show banner after 3 seconds if not dismissed before
+  if (!localStorage.getItem('dlp_install_dismissed')) {
+    setTimeout(() => {
+      const banner = document.getElementById('installBanner');
+      if (banner) { banner.style.display = 'flex'; }
+    }, 3000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  localStorage.setItem('dlp_install_dismissed', '1');
+});
+
+function triggerInstall() {
+  if (!deferredInstallPrompt) {
+    // iOS fallback — show manual instructions
+    showIOSInstallGuide();
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      localStorage.setItem('dlp_install_dismissed', '1');
+    }
+    deferredInstallPrompt = null;
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+  });
+}
+
+function dismissInstall() {
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  localStorage.setItem('dlp_install_dismissed', '1');
+}
+
+function showIOSInstallGuide() {
+  const overlay = document.getElementById('settingsOverlay');
+  if (!overlay) return;
+  const sheet = overlay.querySelector('.settings-sheet');
+  const orig = sheet.innerHTML;
+  sheet.innerHTML = `
+    <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px"></div>
+    <div style="font-size:16px;font-weight:800;margin-bottom:14px">Instalacja na iPhone</div>
+    <div style="background:rgba(139,110,245,0.08);border:1px solid rgba(139,110,245,0.2);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:13px;font-weight:600;color:var(--text2);line-height:1.7">
+      1. Otwórz tę stronę w <b style="color:var(--text)">Safari</b> (nie Chrome)<br>
+      2. Dotknij ikony <b style="color:var(--text)">Udostępnij</b> <span style="font-size:16px">⬆</span> na dole ekranu<br>
+      3. Przewiń w dół i wybierz <b style="color:var(--text)">"Na ekran startowy"</b><br>
+      4. Kliknij <b style="color:var(--text)">Dodaj</b> — gotowe!
+    </div>
+    <div style="font-size:12px;color:var(--text3);font-weight:600;line-height:1.5;margin-bottom:16px">
+      Na Android (Chrome): pojawi się automatyczny baner z prośbą o instalację lub menu ⋮ → "Dodaj do ekranu głównego".
+    </div>
+    <button onclick="document.getElementById('settingsOverlay').classList.remove('show')" style="width:100%;background:var(--purple);border:none;border-radius:12px;padding:12px;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer">Rozumiem!</button>
+  `;
+  overlay.classList.add('show');
+  // Restore sheet after closing
+  overlay.addEventListener('click', function restoreSheet(e) {
+    if (e.target === overlay) {
+      setTimeout(() => { sheet.innerHTML = orig; }, 300);
+      overlay.removeEventListener('click', restoreSheet);
+    }
+  });
+}
+
+// Check if already running as installed PWA
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+  localStorage.setItem('dlp_install_dismissed', '1');
+}
+</script>
+</body>
+</html>
